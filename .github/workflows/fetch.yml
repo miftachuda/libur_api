@@ -3,7 +3,7 @@ name: Update Holidays
 on:
   schedule:
     - cron: "0 0 * * *" # run daily at midnight UTC
-  workflow_dispatch: # allow manual trigger
+  workflow_dispatch:
 
 jobs:
   fetch:
@@ -12,14 +12,21 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Fetch API
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Fetch and Filter Holidays
         run: |
-          curl -s https://hari-libur-api.vercel.app/api > data/holidays.json
+          mkdir -p data
+          curl -s https://hari-libur-api.vercel.app/api > all.json
+          node -e "const fs=require('fs');const data=JSON.parse(fs.readFileSync('all.json','utf8'));const filtered=data.filter(d=>d.is_national_holiday===true);fs.writeFileSync('data/holidays.json', JSON.stringify(filtered,null,2));"
 
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/holidays.json
-          git commit -m "Update holidays.json" || echo "No changes to commit"
+          git commit -m "Update national holidays.json" || echo "No changes to commit"
           git push
