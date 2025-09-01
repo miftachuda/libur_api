@@ -1,0 +1,25 @@
+name: Update Holidays
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # run daily at midnight UTC
+  workflow_dispatch: # allow manual trigger
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Fetch API
+        run: |
+          curl -s https://hari-libur-api.vercel.app/api > data/holidays.json
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/holidays.json
+          git commit -m "Update holidays.json" || echo "No changes to commit"
+          git push
